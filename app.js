@@ -1,8 +1,22 @@
-const Joi = require('joi');
 const express = require("express");
+const startupDebugger = require('debug')("app:startup");
+const dbDebugger = require('debug')("app:db");
+// const urlEncoder = require('')
+const config = require("config");
+const Joi = require('joi');
+const morgan = require('morgan');
 const app = express();
 
 app.use(express.json());
+
+startupDebugger("Name - ", config.get('name'));
+startupDebugger("Very Secure Password - ", config.get('mail.password'));
+if (app.get('env') === 'development'){
+  startupDebugger("Morgan enabled");
+  app.use(morgan('tiny'));
+}
+
+dbDebugger("Connecting to MongoDB...");
 
 const results = [
 {id: 1, output: "hello"},
@@ -58,19 +72,30 @@ app.post('/api/result', (req, res) => {
 
 app.put('/api/result/:id', (req, res) => {
   const resultId = req.params.id;
-  const result = fetchResultById(resultId);
+  let result = fetchResultById(resultId);
   const {error} = validateInputResult(req.body);
 
   if (!result) return res.status(404).send(`The given result with id ${resultId} was not found`)
   if (error) return res.status(400).send(error.details[0].message);
 
   const resultIn = {
-    id: results.length + 1,
+    id: resultId,
     output: req.body.output
   };
 
-  results.push(resultIn);
-  res.send(resultIn);
+  result.output = resultIn.output;
+  res.send(result);
+});
+
+app.delete('/api/result/:id', (req, res) => {
+  const resultId = req.params.id;
+  let result = fetchResultById(resultId);
+
+  if (!result) return res.status(404).send(`The given result with id ${resultId} was not found`);
+
+  const index = results.indexOf(result);
+  results.splice(index, 1);
+  res.send(results);
 });
 
 const port = process.env.PORT || 3000;
