@@ -25,9 +25,18 @@ const createResult = async () => {
         output: 1,
         isPublished: true
     });
+    console.log(result);
     return await result.save();
 };
 
-createResult()
-    .then(res => console.log(res))
+const getResults = async () =>{
+    const results = await Result
+        .find({output: 1})
+        .limit(1)
+        .select({name: 1, steps: 1});
+    console.log(results);
+};
+
+getResults()
+    .then(res => null)
     .catch();
