@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost:27017/playground', {
+mongoose.connect('mongodb://localhost/playground', {
     useNewUrlParser: true,
     useUnifiedTopology: true })
     .then(() => console.log("db connected..."))
-    .catch(() => console.log("db not connected something went wrong..."));
+    .catch(() => console.log("db not connected, something went wrong..."));
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
