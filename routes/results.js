@@ -3,19 +3,18 @@ const router = express.Router();
 const Joi = require('joi');
 const debug = require('debug')("app:Results API");
 
-const db = require('../resultDB/resultDB');
+const ResultMethods = require('../mongoDB/resultDB/resultMethods');
 
 const validateInputResult = (result) => {
     const schema = {
         name: Joi.string().min(3).max(255).required(),
         output: Joi.string().min(3).max(255).required()
     };
-
     return Joi.validate(result, schema);
 };
 
 router.get('', (req, response) => {
-    db.getAllResults()
+    ResultMethods.getMultipleResults()
         .then(result => response.send(result))
         .catch(result => {
             debug("[caught] couldn't fetch from database");
@@ -26,7 +25,7 @@ router.get('', (req, response) => {
 router.get('/:id', (req, response) => {
     const resultId = req.params.id;
 
-    db.getAllResults({_id: resultId})
+    ResultMethods.getOneResult(resultId)
         .then(result => {
             if (!result) return response.status(404).send(`The given result with id ${resultId} was not found`)
             response.send(result);
@@ -38,15 +37,12 @@ router.get('/:id', (req, response) => {
 });
 
 router.post('', (req, response) => {
-    const {error} = validateInputResult(req.body);
+    const data = req.body;
+    const {error} = validateInputResult(data);
 
     if (error) return response.status(400).send(error.details[0].message);
 
-    const name = req.body.name;
-    const output = req.body.output;
-
-
-    db.createResult(name, output)
+    ResultMethods.createResult(data)
         .then(result => response.send(result))
         .catch(result => {
             debug("[caught] couldn't push to database");
@@ -54,32 +50,31 @@ router.post('', (req, response) => {
         });
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', (req, response) => {
     const resultId = req.params.id;
-    let result = fetchResultById(resultId);
     const {error} = validateInputResult(req.body);
 
-    if (!result) return res.status(404).send(`The given result with id ${resultId} was not found`)
-    if (error) return res.status(400).send(error.details[0].message);
+    if (error) return response.status(400).send(error.details[0].message);
 
-    const resultIn = {
-        id: resultId,
-        output: req.body.output
-    };
+    const data = req.body;
 
-    result.output = resultIn.output;
-    res.send(result);
+    ResultMethods.updateResult(resultId, data)
+        .then(result => response.send(result))
+        .catch(err => {
+            debug("[caught] couldn't update in database");
+            response.send(err);
+        });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', (req, response) => {
     const resultId = req.params.id;
-    let result = fetchResultById(resultId);
 
-    if (!result) return res.status(404).send(`The given result with id ${resultId} was not found`);
-
-    const index = results.indexOf(result);
-    results.splice(index, 1);
-    res.send(result);
+    ResultMethods.deleteResult(resultId)
+        .then(result => response.send(result === "Data not found in our database" ? result : "Your item has been successfully deleted!"))
+        .catch(err => {
+            debug("[caught] couldn't delete in database");
+            response.send(err);
+        });
 });
 
 module.exports = router;

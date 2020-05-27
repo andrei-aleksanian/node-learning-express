@@ -10,6 +10,7 @@
     "cookie-parser": "~1.4.5",
     "debug": "~4.1.1",
     "express": "~4.17.1",
+    "google-libphonenumber": "^3.2.10",
     "helmet": "^3.22.0",
     "http-errors": "~1.7.3",
     "joi": "^14.3.1",
